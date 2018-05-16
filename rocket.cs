@@ -1,4 +1,101 @@
 
+       using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class Rocket : MonoBehaviour {
+
+
+    [SerializeField] float rcsThrust = 100f;
+    [SerializeField] float boost = 100f;
+    [SerializeField] float levelLoadDelay = 1f;
+
+    [SerializeField] AudioClip mainEngine;
+    [SerializeField] AudioClip explosion;
+    [SerializeField] AudioClip win;
+
+    [SerializeField] ParticleSystem mainEngineParticles;
+    [SerializeField] ParticleSystem explosionParticles;
+    [SerializeField] ParticleSystem winParticles;
+
+    Rigidbody rigidBody;
+    AudioSource rocketSound;
+    enum State {Alive, Dying, Transcending}
+    State state = State.Alive;
+
+    bool CollisionsDisabled = false;
+
+   
+
+    // Use this for initialization
+    void Start () {
+        rigidBody = GetComponent<Rigidbody>();
+        rocketSound = GetComponent<AudioSource>();
+        
+    }
+	
+	// Update is called once per frame
+	void Update () {
+        if (state == State.Alive) { 
+        RespondToThrustInput();
+        RespondToRotateInput();
+        }
+
+        if (Debug.isDebugBuild){
+
+            respondToDebugKey();
+
+        }
+
+       
+
+
+        }
+
+    private void respondToDebugKey()
+    {
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            StartSuccessSequence();
+
+        }
+
+        else if (Input.GetKeyDown(KeyCode.C))
+        {
+            // disable collisions
+            CollisionsDisabled = !CollisionsDisabled;
+            
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+
+        if (state != State.Alive || CollisionsDisabled) {return;}
+
+        switch (collision.gameObject.tag)
+        {
+            case "friendly":
+                break;
+            case "Finish":
+                StartSuccessSequence();
+
+                break;
+
+            default:
+                StartDeathSequence();
+
+                break;
+        }
+    }
+
+    private void StartDeathSequence()
+    {
+        state = State.Dying;
+        rocketSound.Stop();
+        rocketSound.PlayOneShot(explosion);
         explosionParticles.Play();
         Invoke("LoadFirstLevel", levelLoadDelay);
     }
@@ -86,3 +183,4 @@
 
 
 }
+
